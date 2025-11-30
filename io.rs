@@ -1,12 +1,14 @@
 use crate::value::Value;
-use crate::symbol_table::SymbolTable;
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
-/// Registra funções de I/O (arquivos) na stdlib
-pub fn register(globals: &mut SymbolTable) {
-    globals.define_native_function("read_file", |args| {
-        if args.len() != 1 { return Err("read_file espera 1 argumento".to_string()); }
+/// Cria e retorna o objeto do módulo `io` com todas as suas funções.
+pub fn create_module() -> Value {
+    let mut module = HashMap::new();
+
+    module.insert("read_file".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("io.read_file espera 1 argumento".to_string()); }
         
         match &args[0] {
             Value::String(path) => {
@@ -15,12 +17,12 @@ pub fn register(globals: &mut SymbolTable) {
                     Err(e) => Err(format!("Erro ao ler arquivo: {}", e)),
                 }
             },
-            _ => Err("read_file espera uma string (caminho do arquivo)".to_string()),
+            _ => Err("io.read_file espera uma string (caminho do arquivo)".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("write_file", |args| {
-        if args.len() != 2 { return Err("write_file espera 2 argumentos".to_string()); }
+    module.insert("write_file".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 2 { return Err("io.write_file espera 2 argumentos".to_string()); }
         
         match (&args[0], &args[1]) {
             (Value::String(path), Value::String(content)) => {
@@ -29,12 +31,12 @@ pub fn register(globals: &mut SymbolTable) {
                     Err(e) => Err(format!("Erro ao escrever arquivo: {}", e)),
                 }
             },
-            _ => Err("write_file espera duas strings (caminho e conteúdo)".to_string()),
+            _ => Err("io.write_file espera duas strings (caminho e conteúdo)".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("append_file", |args| {
-        if args.len() != 2 { return Err("append_file espera 2 argumentos".to_string()); }
+    module.insert("append_file".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 2 { return Err("io.append_file espera 2 argumentos".to_string()); }
         
         match (&args[0], &args[1]) {
             (Value::String(path), Value::String(content)) => {
@@ -51,23 +53,23 @@ pub fn register(globals: &mut SymbolTable) {
                     Err(e) => Err(format!("Erro ao abrir arquivo: {}", e)),
                 }
             },
-            _ => Err("append_file espera duas strings (caminho e conteúdo)".to_string()),
+            _ => Err("io.append_file espera duas strings (caminho e conteúdo)".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("exists", |args| {
-        if args.len() != 1 { return Err("exists espera 1 argumento".to_string()); }
+    module.insert("exists".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("io.exists espera 1 argumento".to_string()); }
         
         match &args[0] {
             Value::String(path) => {
                 Ok(Value::Boolean(Path::new(path).exists()))
             },
-            _ => Err("exists espera uma string (caminho)".to_string()),
+            _ => Err("io.exists espera uma string (caminho)".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("delete", |args| {
-        if args.len() != 1 { return Err("delete espera 1 argumento".to_string()); }
+    module.insert("delete".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("io.delete espera 1 argumento".to_string()); }
         
         match &args[0] {
             Value::String(path) => {
@@ -84,12 +86,12 @@ pub fn register(globals: &mut SymbolTable) {
                     Err(e) => Err(format!("Erro ao deletar: {}", e)),
                 }
             },
-            _ => Err("delete espera uma string (caminho)".to_string()),
+            _ => Err("io.delete espera uma string (caminho)".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("read_dir", |args| {
-        if args.len() != 1 { return Err("read_dir espera 1 argumento".to_string()); }
+    module.insert("read_dir".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("io.read_dir espera 1 argumento".to_string()); }
         
         match &args[0] {
             Value::String(path) => {
@@ -110,34 +112,34 @@ pub fn register(globals: &mut SymbolTable) {
                     Err(e) => Err(format!("Erro ao ler diretório: {}", e)),
                 }
             },
-            _ => Err("read_dir espera uma string (caminho do diretório)".to_string()),
+            _ => Err("io.read_dir espera uma string (caminho do diretório)".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("is_file", |args| {
-        if args.len() != 1 { return Err("is_file espera 1 argumento".to_string()); }
+    module.insert("is_file".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("io.is_file espera 1 argumento".to_string()); }
         
         match &args[0] {
             Value::String(path) => {
                 Ok(Value::Boolean(Path::new(path).is_file()))
             },
-            _ => Err("is_file espera uma string (caminho)".to_string()),
+            _ => Err("io.is_file espera uma string (caminho)".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("is_dir", |args| {
-        if args.len() != 1 { return Err("is_dir espera 1 argumento".to_string()); }
+    module.insert("is_dir".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("io.is_dir espera 1 argumento".to_string()); }
         
         match &args[0] {
             Value::String(path) => {
                 Ok(Value::Boolean(Path::new(path).is_dir()))
             },
-            _ => Err("is_dir espera uma string (caminho)".to_string()),
+            _ => Err("io.is_dir espera uma string (caminho)".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("create_dir", |args| {
-        if args.len() != 1 { return Err("create_dir espera 1 argumento".to_string()); }
+    module.insert("create_dir".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("io.create_dir espera 1 argumento".to_string()); }
         
         match &args[0] {
             Value::String(path) => {
@@ -146,7 +148,10 @@ pub fn register(globals: &mut SymbolTable) {
                     Err(e) => Err(format!("Erro ao criar diretório: {}", e)),
                 }
             },
-            _ => Err("create_dir espera uma string (caminho)".to_string()),
+            _ => Err("io.create_dir espera uma string (caminho)".to_string()),
         }
-    });
+    }));
+    
+    let dict_map = module.into_iter().map(|(k, v)| (Value::String(k), v)).collect();
+    Value::Dict(dict_map)
 }

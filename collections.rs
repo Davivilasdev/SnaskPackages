@@ -1,9 +1,11 @@
 use crate::value::Value;
-use crate::symbol_table::SymbolTable;
+use std::collections::HashMap;
 
-/// Registra funções de coleções (map, filter, reduce, etc) na stdlib
-pub fn register(globals: &mut SymbolTable) {
-    globals.define_native_function("map", |args| {
+/// Cria e retorna o objeto do módulo `collections` com todas as suas funções.
+pub fn create_module() -> Value {
+    let mut module = HashMap::new();
+
+    module.insert("map".to_string(), Value::NativeFunction(|args| {
         if args.len() != 2 { return Err("map espera 2 argumentos".to_string()); }
         
         match (&args[0], &args[1]) {
@@ -14,9 +16,9 @@ pub fn register(globals: &mut SymbolTable) {
             },
             _ => Err("map espera uma lista e uma função".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("filter", |args| {
+    module.insert("filter".to_string(), Value::NativeFunction(|args| {
         if args.len() != 2 { return Err("filter espera 2 argumentos".to_string()); }
         
         match (&args[0], &args[1]) {
@@ -26,9 +28,9 @@ pub fn register(globals: &mut SymbolTable) {
             },
             _ => Err("filter espera uma lista e uma função".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("reduce", |args| {
+    module.insert("reduce".to_string(), Value::NativeFunction(|args| {
         if args.len() < 2 { return Err("reduce espera pelo menos 2 argumentos".to_string()); }
         
         match (&args[0], &args[1]) {
@@ -38,9 +40,9 @@ pub fn register(globals: &mut SymbolTable) {
             },
             _ => Err("reduce espera uma lista e uma função".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("find", |args| {
+    module.insert("find".to_string(), Value::NativeFunction(|args| {
         if args.len() != 2 { return Err("find espera 2 argumentos".to_string()); }
         
         match (&args[0], &args[1]) {
@@ -50,9 +52,9 @@ pub fn register(globals: &mut SymbolTable) {
             },
             _ => Err("find espera uma lista e uma função".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("any", |args| {
+    module.insert("any".to_string(), Value::NativeFunction(|args| {
         if args.len() != 2 { return Err("any espera 2 argumentos".to_string()); }
         
         match (&args[0], &args[1]) {
@@ -62,9 +64,9 @@ pub fn register(globals: &mut SymbolTable) {
             },
             _ => Err("any espera uma lista e uma função".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("all", |args| {
+    module.insert("all".to_string(), Value::NativeFunction(|args| {
         if args.len() != 2 { return Err("all espera 2 argumentos".to_string()); }
         
         match (&args[0], &args[1]) {
@@ -74,9 +76,9 @@ pub fn register(globals: &mut SymbolTable) {
             },
             _ => Err("all espera uma lista e uma função".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("reverse", |args| {
+    module.insert("reverse".to_string(), Value::NativeFunction(|args| {
         if args.len() != 1 { return Err("reverse espera 1 argumento".to_string()); }
         
         match &args[0] {
@@ -87,9 +89,9 @@ pub fn register(globals: &mut SymbolTable) {
             },
             _ => Err("reverse espera uma lista".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("sort", |args| {
+    module.insert("sort".to_string(), Value::NativeFunction(|args| {
         if args.len() != 1 { return Err("sort espera 1 argumento".to_string()); }
         
         match &args[0] {
@@ -108,9 +110,9 @@ pub fn register(globals: &mut SymbolTable) {
             },
             _ => Err("sort espera uma lista".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("unique", |args| {
+    module.insert("unique".to_string(), Value::NativeFunction(|args| {
         if args.len() != 1 { return Err("unique espera 1 argumento".to_string()); }
         
         match &args[0] {
@@ -125,9 +127,9 @@ pub fn register(globals: &mut SymbolTable) {
             },
             _ => Err("unique espera uma lista".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("flatten", |args| {
+    module.insert("flatten".to_string(), Value::NativeFunction(|args| {
         if args.len() != 1 { return Err("flatten espera 1 argumento".to_string()); }
         
         match &args[0] {
@@ -145,9 +147,9 @@ pub fn register(globals: &mut SymbolTable) {
             },
             _ => Err("flatten espera uma lista".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("range", |args| {
+    module.insert("range".to_string(), Value::NativeFunction(|args| {
         if args.len() < 1 || args.len() > 3 {
             return Err("range espera 1, 2 ou 3 argumentos".to_string());
         }
@@ -194,5 +196,8 @@ pub fn register(globals: &mut SymbolTable) {
         }
 
         Ok(Value::List(result))
-    });
+    }));
+
+    let dict_map = module.into_iter().map(|(k, v)| (Value::String(k), v)).collect();
+    Value::Dict(dict_map)
 }

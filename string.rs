@@ -1,43 +1,45 @@
 use crate::value::Value;
-use crate::symbol_table::SymbolTable;
+use std::collections::HashMap;
 
-/// Registra funções de manipulação de strings na stdlib
-pub fn register(globals: &mut SymbolTable) {
-    globals.define_native_function("len", |args| {
-        if args.len() != 1 { return Err("len espera 1 argumento".to_string()); }
+/// Cria e retorna o objeto do módulo `string` com todas as suas funções (exceto format).
+pub fn create_module() -> Value {
+    let mut module = HashMap::new();
+
+    module.insert("len".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("string.len espera 1 argumento".to_string()); }
         match &args[0] {
             Value::String(s) => Ok(Value::Number(s.len() as f64)),
             Value::List(l) => Ok(Value::Number(l.len() as f64)),
-            _ => Err("len espera uma string ou lista".to_string()),
+            _ => Err("string.len espera uma string ou lista".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("upper", |args| {
-        if args.len() != 1 { return Err("upper espera 1 argumento".to_string()); }
+    module.insert("upper".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("string.upper espera 1 argumento".to_string()); }
         match &args[0] {
             Value::String(s) => Ok(Value::String(s.to_uppercase())),
-            _ => Err("upper espera uma string".to_string()),
+            _ => Err("string.upper espera uma string".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("lower", |args| {
-        if args.len() != 1 { return Err("lower espera 1 argumento".to_string()); }
+    module.insert("lower".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("string.lower espera 1 argumento".to_string()); }
         match &args[0] {
             Value::String(s) => Ok(Value::String(s.to_lowercase())),
-            _ => Err("lower espera uma string".to_string()),
+            _ => Err("string.lower espera uma string".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("trim", |args| {
-        if args.len() != 1 { return Err("trim espera 1 argumento".to_string()); }
+    module.insert("trim".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("string.trim espera 1 argumento".to_string()); }
         match &args[0] {
             Value::String(s) => Ok(Value::String(s.trim().to_string())),
-            _ => Err("trim espera uma string".to_string()),
+            _ => Err("string.trim espera uma string".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("split", |args| {
-        if args.len() != 2 { return Err("split espera 2 argumentos".to_string()); }
+    module.insert("split".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 2 { return Err("string.split espera 2 argumentos".to_string()); }
         match (&args[0], &args[1]) {
             (Value::String(s), Value::String(delimiter)) => {
                 let parts: Vec<Value> = s.split(delimiter.as_str())
@@ -45,18 +47,18 @@ pub fn register(globals: &mut SymbolTable) {
                     .collect();
                 Ok(Value::List(parts))
             },
-            _ => Err("split espera duas strings".to_string()),
+            _ => Err("string.split espera duas strings".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("join", |args| {
-        if args.len() != 2 { return Err("join espera 2 argumentos".to_string()); }
+    module.insert("join".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 2 { return Err("string.join espera 2 argumentos".to_string()); }
         match (&args[0], &args[1]) {
             (Value::List(list), Value::String(separator)) => {
                 let strings: Result<Vec<String>, String> = list.iter().map(|v| {
                     match v {
                         Value::String(s) => Ok(s.clone()),
-                        _ => Err("join espera uma lista de strings".to_string()),
+                        _ => Err("string.join espera uma lista de strings".to_string()),
                     }
                 }).collect();
 
@@ -65,52 +67,52 @@ pub fn register(globals: &mut SymbolTable) {
                     Err(e) => Err(e),
                 }
             },
-            _ => Err("join espera uma lista e uma string".to_string()),
+            _ => Err("string.join espera uma lista e uma string".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("replace", |args| {
-        if args.len() != 3 { return Err("replace espera 3 argumentos".to_string()); }
+    module.insert("replace".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 3 { return Err("string.replace espera 3 argumentos".to_string()); }
         match (&args[0], &args[1], &args[2]) {
             (Value::String(s), Value::String(from), Value::String(to)) => {
                 Ok(Value::String(s.replace(from.as_str(), to.as_str())))
             },
-            _ => Err("replace espera três strings".to_string()),
+            _ => Err("string.replace espera três strings".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("contains", |args| {
-        if args.len() != 2 { return Err("contains espera 2 argumentos".to_string()); }
+    module.insert("contains".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 2 { return Err("string.contains espera 2 argumentos".to_string()); }
         match (&args[0], &args[1]) {
             (Value::String(s), Value::String(substr)) => {
                 Ok(Value::Boolean(s.contains(substr.as_str())))
             },
-            _ => Err("contains espera duas strings".to_string()),
+            _ => Err("string.contains espera duas strings".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("starts_with", |args| {
-        if args.len() != 2 { return Err("starts_with espera 2 argumentos".to_string()); }
+    module.insert("starts_with".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 2 { return Err("string.starts_with espera 2 argumentos".to_string()); }
         match (&args[0], &args[1]) {
             (Value::String(s), Value::String(prefix)) => {
                 Ok(Value::Boolean(s.starts_with(prefix.as_str())))
             },
-            _ => Err("starts_with espera duas strings".to_string()),
+            _ => Err("string.starts_with espera duas strings".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("ends_with", |args| {
-        if args.len() != 2 { return Err("ends_with espera 2 argumentos".to_string()); }
+    module.insert("ends_with".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 2 { return Err("string.ends_with espera 2 argumentos".to_string()); }
         match (&args[0], &args[1]) {
             (Value::String(s), Value::String(suffix)) => {
                 Ok(Value::Boolean(s.ends_with(suffix.as_str())))
             },
-            _ => Err("ends_with espera duas strings".to_string()),
+            _ => Err("string.ends_with espera duas strings".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("chars", |args| {
-        if args.len() != 1 { return Err("chars espera 1 argumento".to_string()); }
+    module.insert("chars".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("string.chars espera 1 argumento".to_string()); }
         match &args[0] {
             Value::String(s) => {
                 let chars: Vec<Value> = s.chars()
@@ -118,12 +120,12 @@ pub fn register(globals: &mut SymbolTable) {
                     .collect();
                 Ok(Value::List(chars))
             },
-            _ => Err("chars espera uma string".to_string()),
+            _ => Err("string.chars espera uma string".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("substring", |args| {
-        if args.len() != 3 { return Err("substring espera 3 argumentos".to_string()); }
+    module.insert("substring".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 3 { return Err("string.substring espera 3 argumentos".to_string()); }
         match (&args[0], &args[1], &args[2]) {
             (Value::String(s), Value::Number(start), Value::Number(end)) => {
                 let start_idx = (*start as usize).min(s.len());
@@ -140,11 +142,17 @@ pub fn register(globals: &mut SymbolTable) {
                 
                 Ok(Value::String(substr))
             },
-            _ => Err("substring espera uma string e dois números".to_string()),
+            _ => Err("string.substring espera uma string e dois números".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("format", |args| {
+    let dict_map = module.into_iter().map(|(k, v)| (Value::String(k), v)).collect();
+    Value::Dict(dict_map)
+}
+
+/// Retorna a função 'format' para ser registrada globalmente.
+pub fn get_global_format_function() -> Value {
+    Value::NativeFunction(|args| {
         if args.is_empty() { return Err("format espera pelo menos 1 argumento".to_string()); }
         
         match &args[0] {
@@ -153,15 +161,7 @@ pub fn register(globals: &mut SymbolTable) {
                 
                 for (i, arg) in args[1..].iter().enumerate() {
                     let placeholder = format!("{{{}}}", i);
-                    let value_str = match arg {
-                        Value::Number(n) => n.to_string(),
-                        Value::String(s) => s.clone(),
-                        Value::Boolean(b) => b.to_string(),
-                        Value::List(_) => "[lista]".to_string(),
-                        Value::Dict(_) => "{dict}".to_string(),
-                        Value::Nil => "nil".to_string(),
-                        _ => "?".to_string(),
-                    };
+                    let value_str = arg.to_string(); // Use the Display trait of Value
                     result = result.replace(&placeholder, &value_str);
                 }
                 
@@ -169,5 +169,5 @@ pub fn register(globals: &mut SymbolTable) {
             },
             _ => Err("format espera uma string como primeiro argumento".to_string()),
         }
-    });
+    })
 }

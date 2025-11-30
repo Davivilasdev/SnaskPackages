@@ -212,3 +212,100 @@ pub fn register(globals: &mut SymbolTable) {
     globals.define("E".to_string(), Value::Number(std::f64::consts::E), false, false);
     globals.define("TAU".to_string(), Value::Number(std::f64::consts::TAU), false, false);
 }
+
+/// Cria e retorna o módulo math como um objeto Value
+/// Esta função é usada pelo novo sistema de gerenciamento de pacotes
+/// Cria e retorna o módulo math como um objeto Value
+/// Esta função é usada pelo novo sistema de gerenciamento de pacotes
+pub fn create_module() -> Value {
+    use std::collections::HashMap;
+    
+    let mut module = HashMap::new();
+    
+    // Funções básicas
+    module.insert("abs".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("abs espera 1 argumento".to_string()); }
+        match &args[0] {
+            Value::Number(n) => Ok(Value::Number(n.abs())),
+            _ => Err("abs espera um número".to_string()),
+        }
+    }));
+    
+    module.insert("floor".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("floor espera 1 argumento".to_string()); }
+        match &args[0] {
+            Value::Number(n) => Ok(Value::Number(n.floor())),
+            _ => Err("floor espera um número".to_string()),
+        }
+    }));
+    
+    module.insert("ceil".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("ceil espera 1 argumento".to_string()); }
+        match &args[0] {
+            Value::Number(n) => Ok(Value::Number(n.ceil())),
+            _ => Err("ceil espera um número".to_string()),
+        }
+    }));
+    
+    module.insert("round".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("round espera 1 argumento".to_string()); }
+        match &args[0] {
+            Value::Number(n) => Ok(Value::Number(n.round())),
+            _ => Err("round espera um número".to_string()),
+        }
+    }));
+    
+    module.insert("pow".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 2 { return Err("pow espera 2 argumentos".to_string()); }
+        match (&args[0], &args[1]) {
+            (Value::Number(base), Value::Number(exp)) => Ok(Value::Number(base.powf(*exp))),
+            _ => Err("pow espera dois números".to_string()),
+        }
+    }));
+    
+    module.insert("sqrt".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("sqrt espera 1 argumento".to_string()); }
+        match &args[0] {
+            Value::Number(n) => {
+                if *n < 0.0 {
+                    Err("sqrt não aceita números negativos".to_string())
+                } else {
+                    Ok(Value::Number(n.sqrt()))
+                }
+            },
+            _ => Err("sqrt espera um número".to_string()),
+        }
+    }));
+    
+    module.insert("sin".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("sin espera 1 argumento".to_string()); }
+        match &args[0] {
+            Value::Number(n) => Ok(Value::Number(n.sin())),
+            _ => Err("sin espera um número".to_string()),
+        }
+    }));
+    
+    module.insert("cos".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("cos espera 1 argumento".to_string()); }
+        match &args[0] {
+            Value::Number(n) => Ok(Value::Number(n.cos())),
+            _ => Err("cos espera um número".to_string()),
+        }
+    }));
+    
+    module.insert("tan".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("tan espera 1 argumento".to_string()); }
+        match &args[0] {
+            Value::Number(n) => Ok(Value::Number(n.tan())),
+            _ => Err("tan espera um número".to_string()),
+        }
+    }));
+    
+    // Constantes
+    module.insert("PI".to_string(), Value::Number(std::f64::consts::PI));
+    module.insert("E".to_string(), Value::Number(std::f64::consts::E));
+    module.insert("TAU".to_string(), Value::Number(std::f64::consts::TAU));
+    
+    let dict_map = module.into_iter().map(|(k, v)| (Value::String(k), v)).collect();
+    Value::Dict(dict_map)
+}

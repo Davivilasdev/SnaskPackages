@@ -1,11 +1,12 @@
 use crate::value::Value;
-use crate::symbol_table::SymbolTable;
 use std::collections::HashMap;
 
-/// Registra funções de HTTP na stdlib
-pub fn register(globals: &mut SymbolTable) {
-    globals.define_native_function("http_get", |args| {
-        if args.len() != 1 { return Err("http_get espera 1 argumento".to_string()); }
+/// Cria e retorna o objeto do módulo `http` com todas as suas funções.
+pub fn create_module() -> Value {
+    let mut module = HashMap::new();
+
+    module.insert("get".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("http.get espera 1 argumento".to_string()); }
         
         match &args[0] {
             Value::String(url) => {
@@ -45,12 +46,12 @@ pub fn register(globals: &mut SymbolTable) {
                     Err("HTTP não está habilitado nesta build".to_string())
                 }
             },
-            _ => Err("http_get espera uma string (URL)".to_string()),
+            _ => Err("http.get espera uma string (URL)".to_string()),
         }
-    });
+    }));
 
-    globals.define_native_function("http_post", |args| {
-        if args.len() != 2 { return Err("http_post espera 2 argumentos".to_string()); }
+    module.insert("post".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 2 { return Err("http.post espera 2 argumentos".to_string()); }
         
         match (&args[0], &args[1]) {
             (Value::String(url), Value::String(body)) => {
@@ -89,7 +90,11 @@ pub fn register(globals: &mut SymbolTable) {
                     Err("HTTP não está habilitado nesta build".to_string())
                 }
             },
-            _ => Err("http_post espera duas strings (URL e body)".to_string()),
+            _ => Err("http.post espera duas strings (URL e body)".to_string()),
         }
-    });
+    }));
+    
+    // Converte o HashMap para o formato esperado por Value::Dict
+    let dict_map = module.into_iter().map(|(k, v)| (Value::String(k), v)).collect();
+    Value::Dict(dict_map)
 }

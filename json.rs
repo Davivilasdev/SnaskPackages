@@ -93,3 +93,46 @@ fn value_to_json(value: &Value) -> serde_json::Value {
         _ => serde_json::Value::Null,
     }
 }
+
+/// Cria e retorna o módulo json como um objeto Value
+/// Esta função é usada pelo novo sistema de gerenciamento de pacotes
+pub fn create_module() -> Value {
+    let mut module = HashMap::new();
+    
+    module.insert("parse".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("json.parse espera 1 argumento".to_string()); }
+        
+        match &args[0] {
+            Value::String(json_str) => {
+                match serde_json::from_str::<serde_json::Value>(json_str) {
+                    Ok(json_value) => Ok(json_to_value(&json_value)),
+                    Err(e) => Err(format!("Erro ao parsear JSON: {}", e)),
+                }
+            },
+            _ => Err("json.parse espera uma string".to_string()),
+        }
+    }));
+
+    module.insert("stringify".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("json.stringify espera 1 argumento".to_string()); }
+        
+        let json_value = value_to_json(&args[0]);
+        match serde_json::to_string(&json_value) {
+            Ok(json_str) => Ok(Value::String(json_str)),
+            Err(e) => Err(format!("Erro ao converter para JSON: {}", e)),
+        }
+    }));
+
+    module.insert("stringify_pretty".to_string(), Value::NativeFunction(|args| {
+        if args.len() != 1 { return Err("json.stringify_pretty espera 1 argumento".to_string()); }
+        
+        let json_value = value_to_json(&args[0]);
+        match serde_json::to_string_pretty(&json_value) {
+            Ok(json_str) => Ok(Value::String(json_str)),
+            Err(e) => Err(format!("Erro ao converter para JSON: {}", e)),
+        }
+    }));
+    
+    let dict_map = module.into_iter().map(|(k, v)| (Value::String(k), v)).collect();
+    Value::Dict(dict_map)
+}
